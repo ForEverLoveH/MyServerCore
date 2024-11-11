@@ -4,7 +4,7 @@ using MyTcpClientTest;
 
 Console.WriteLine("Hello, World!");
 
-ServiceManager _service = new ServiceManager();
+ServiceManager _service = new ServiceManager(0);
 _service.StartService();
 Thread .Sleep(1000);
 if (_service.IsConnection)
