@@ -11,7 +11,6 @@ namespace MyServerCore.Server.Tcp.Server;
 public class CTcpService:TcpService
 {
 
-   
     /// <summary>
     /// 
     /// </summary>
@@ -47,21 +46,37 @@ public class CTcpService:TcpService
     {
         
     }
-    public  void cSendData<T>(T data) where T : class
+
+    #region  发送
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="data"></param>
+    /// <typeparam name="T"></typeparam>
+    public  void CSendData<T>(T data) where T : class
     {
         if(data == null)return  ;
         string json = JsonConvert.SerializeObject(data);
-         SendData(json);     
+         CSendData(json);     
     }
-    public void SendData(string json)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="json"></param>
+    public void CSendData(string json)
     {
         if (!string.IsNullOrEmpty(json))
         {
             byte[] message = Encoding.UTF8.GetBytes(json);
-            SendData(message);
+            CSendData(message);
         }
     }
-    public void SendData(byte[] message)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="message"></param>
+    public void CSendData(byte[] message)
     {
         int length = message.Length;
         byte[] buffer = BitConverter.GetBytes(length);
@@ -72,7 +87,8 @@ public class CTcpService:TcpService
                 Array.Reverse(buffer);
             }
             byte[] result = buffer.Concat(message).ToArray();
-            SendData(result);
+            Multicast(result);
         }
     }
+    #endregion
 }
