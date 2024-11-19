@@ -2,8 +2,11 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Google.Protobuf;
 using MyServerCode.Summer.Service;
 using MyServerCode.Summer.Service.Tcp;
+using MyServerCore.Server.CRC;
+using MyServerCore.Server.ProtobufService;
 using Newtonsoft.Json;
 
 namespace MyServerCore.Server.Tcp.Server;
@@ -33,7 +36,10 @@ public class CTcpService:TcpService
     {
         
     }
-
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
     protected override TcpSession CreateSession()
     {
         return new CTcpSession(this);
@@ -47,36 +53,38 @@ public class CTcpService:TcpService
         
     }
 
-    #region  发送
-    
+    #region  json 发送
+
     /// <summary>
     /// 
     /// </summary>
     /// <param name="data"></param>
     /// <typeparam name="T"></typeparam>
-    public  void CSendData<T>(T data) where T : class
+    public void CSendJsonData<T>(T data) where T : class
     {
-        if(data == null)return  ;
+        if (data == null) return;
         string json = JsonConvert.SerializeObject(data);
-         CSendData(json);     
+        CSendJsonData(json);
     }
     /// <summary>
     /// 
     /// </summary>
     /// <param name="json"></param>
-    public void CSendData(string json)
+    public void CSendJsonData(string json)
     {
         if (!string.IsNullOrEmpty(json))
         {
             byte[] message = Encoding.UTF8.GetBytes(json);
-            CSendData(message);
+            byte[] crcCode = BitConverter.GetBytes(CRCService.ComputeChecksum(message));
+            message = message.Concat(crcCode).ToArray();
+            CSendJsonData(message);
         }
     }
     /// <summary>
     /// 
     /// </summary>
     /// <param name="message"></param>
-    public void CSendData(byte[] message)
+    public void CSendJsonData(byte[] message)
     {
         int length = message.Length;
         byte[] buffer = BitConverter.GetBytes(length);
@@ -91,4 +99,44 @@ public class CTcpService:TcpService
         }
     }
     #endregion
+
+    #region protobuf 发送
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="data"></param>
+    public void CSendProtobufData<T>(T data) where T : IMessage<T>
+    {
+        if (data == null) return;
+        int code=ProtobufSession.SeqCode(data.GetType());
+        byte[] typeCode= BitConverter.GetBytes(code);
+        byte[] message=ProtobufSession.Serialize(data);
+        byte[] crcCode=BitConverter.GetBytes(CRCService.ComputeChecksum(message));
+        byte[] result = typeCode.Concat(message.Concat(crcCode)).ToArray();
+        CSendProtobufData(result);
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="message"></param>
+    public void  CSendProtobufData(byte[] message)
+    {
+        int length = message.Length;
+        byte[] buffer = BitConverter.GetBytes(length);
+        if (buffer.Length > 0)
+        {
+            if (!BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(buffer);
+            }
+            byte[] result = buffer.Concat(message).ToArray();
+            Multicast(result);
+        }
+    }
+
+    #endregion
+
+
+
 }

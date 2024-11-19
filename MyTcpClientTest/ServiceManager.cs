@@ -1,4 +1,6 @@
-﻿using MyServerCore.Server.Tcp.Client;
+﻿using Google.Protobuf;
+using MyServerCore.Server.MessageRouter;
+using MyServerCore.Server.Tcp.Client;
 using MyServerCore.Server.Udp.Client;
 
 namespace MyTcpClientTest;
@@ -8,6 +10,7 @@ public class ServiceManager
      private int type = -1;
      private CTcpClient _cTcpClient;
      private CUdpClient _client;
+    
 
      public ServiceManager(int type=0)
      {
@@ -27,12 +30,16 @@ public class ServiceManager
      /// </summary>
      public void StartService()
      {
-          if(type==0) StartTcpService();
+        
+         
+          if (type==0) StartTcpService();
           else
           {
                StartUdpService();
           }
-         
+        
+
+
      }
 
      private void StartUdpService()
@@ -52,7 +59,16 @@ public class ServiceManager
      /// <param name="json"></param>
      public void SendData(string json)
      {
-        if(type==0) _cTcpClient.CSend(json);
+        if(type==0) _cTcpClient.CSendJsonData(json);
         else  _client.CSend(json);
      }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="data"></param>
+    public void SendData<T>(T data)  where T : IMessage<T>
+    {
+        if (type == 0) _cTcpClient.CSendProtobufData(data);
+    }
 }

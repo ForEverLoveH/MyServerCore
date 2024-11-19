@@ -1,4 +1,5 @@
-﻿using MyServerCore.Server.Tcp.Server;
+﻿using MyServerCore.Server.MessageRouter;
+using MyServerCore.Server.Tcp.Server;
 using MyServerCore.Server.Udp.Server;
 
 namespace MyTcpServerTest;
@@ -14,7 +15,8 @@ public class ServiceManager
     private CUdpServer _udpServer;
     public void StartService()
     {
-        if(type==0) StartTcpService();
+        ServiceMessageRouter.GetInstance().StartService(10);
+        if (type==0) StartTcpService();
         else StartUdpService();
     }
 
