@@ -20,11 +20,11 @@ public class CTcpSession:TcpSession
     /// 
     /// </summary>
     /// <param name="tcpService"></param>
-    public CTcpSession(TcpService tcpService,bool isjson=true) : base(tcpService)
+    public CTcpSession(TcpService tcpService,bool isjson=false) : base(tcpService)
     {
-        
+        this.isjson = isjson;
     }
-
+    bool isjson ;
     protected override void OnConnected()
     {
         System.Net.Sockets.Socket mscoSocket = Socket;
@@ -42,55 +42,63 @@ public class CTcpSession:TcpSession
     protected override void OnReceived(byte[] buffer, long offset, long size)
     {
 
-        //byte[] lengthBytes = new byte[4];
-        //Array.Copy(buffer, 0, lengthBytes, 0, 4);
-        //if(!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
-        //int length = BitConverter.ToInt32(lengthBytes, 0);
-        //if(length > 0)
-        //{
-        //    byte[] infactMessage = new byte[length];
-        //    Array.Copy(buffer, 4, infactMessage, 0, length);
-        //byte[] dataCodes = new byte[data.Length - 2];
-        //ushort crc = BitConverter.ToUInt16(dataCodes, dataCodes.Length - 2);
-        //Array.Copy(data, dataCodes, dataCodes.Length);
-        //ushort computedCrc = CRCService.ComputeChecksum(data);
-        //if (computedCrc == crc)
-        //    string message = Encoding.UTF8.GetString(infactMessage);
-        //    Console.WriteLine("收到客户端:"+message);
-        //}
-
-
-        byte[] lengthBytes = new byte[4];
-        Array.Copy(buffer, 0, lengthBytes, 0, 4);
-        if (!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
-        int length = BitConverter.ToInt32(lengthBytes, 0);
-        if (length > 0)
+        if (isjson)
         {
-            byte[] infactMessage = new byte[length];
-            Array.Copy(buffer, 4, infactMessage, 0, length);
-            int code = BitConverter.ToInt32(infactMessage, 0);
-            Type type =ProtobufSession.SeqType(code);
-            if (type.IsClass && typeof(IMessage).IsAssignableFrom(type))
+            byte[] lengthBytes = new byte[4];
+            Array.Copy(buffer, 0, lengthBytes, 0, 4);
+            if (!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
+            int length = BitConverter.ToInt32(lengthBytes, 0);
+            if (length > 0)
             {
-                byte[] data = new byte[length - 4];
-                Array.Copy(infactMessage, 4, data, 0, length - 4);
-                byte[] dataCodes = new byte[data.Length - 2];
+                byte[] infactMessage = new byte[length];
+                Array.Copy(buffer, 4, infactMessage, 0, length);
+                byte[] dataCodes = new byte[infactMessage.Length - 4];
+                Array.Copy(infactMessage, 4, dataCodes, 0, length - 4);
+                byte[] data = new byte[dataCodes.Length - 2];
                 ushort crc = BitConverter.ToUInt16(dataCodes, dataCodes.Length - 2);
-                Array.Copy(data, dataCodes, dataCodes.Length);
+                Array.Copy(data, data, data.Length);
                 ushort computedCrc = CRCService.ComputeChecksum(data);
                 if (computedCrc == crc)
                 {
-                    IMessage message = ProtobufSession.ParseFrom(code, dataCodes, 0, dataCodes.Length);
-                    if(ServiceMessageRouter.GetInstance().IsRunning)
-                    {
-                        ServiceMessageRouter.GetInstance().AddMessageToQueue(this,message);
-                    }
-                     
-                    Console.WriteLine($"收到客户端:{message}");
-
+                    string infact = Encoding.UTF8.GetString(data);
+                    Console.WriteLine("收到客户端:" + infact);
                 }
             }
+        }
+        else
+        {
+            byte[] lengthBytes = new byte[4];
+            Array.Copy(buffer, 0, lengthBytes, 0, 4);
+            if (!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
+            int length = BitConverter.ToInt32(lengthBytes, 0);
+            if (length > 0)
+            {
+                byte[] infactMessage = new byte[length];
+                Array.Copy(buffer, 4, infactMessage, 0, length);
+                int code = BitConverter.ToInt32(infactMessage, 0);
+                Type type = ProtobufSession.SeqType(code);
+                if (type.IsClass && typeof(IMessage).IsAssignableFrom(type))
+                {
+                    byte[] data = new byte[length - 4];
+                    Array.Copy(infactMessage, 4, data, 0, length - 4);
+                    byte[] dataCodes = new byte[data.Length - 2];
+                    ushort crc = BitConverter.ToUInt16(dataCodes, dataCodes.Length - 2);
+                    Array.Copy(data, dataCodes, dataCodes.Length);
+                    ushort computedCrc = CRCService.ComputeChecksum(data);
+                    if (computedCrc == crc)
+                    {
+                        IMessage message = ProtobufSession.ParseFrom(code, dataCodes, 0, dataCodes.Length);
+                        if (ServiceMessageRouter.GetInstance().IsRunning)
+                        {
+                            ServiceMessageRouter.GetInstance().AddMessageToQueue(this, message);
+                        }
 
+                        Console.WriteLine($"收到客户端:{message}");
+
+                    }
+                }
+
+            }
         }
 
     }
