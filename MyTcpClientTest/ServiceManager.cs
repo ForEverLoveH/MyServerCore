@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf;
 using MyServerCore.Server.MessageRouter;
+using MyServerCore.Server.MessageRouter.Client;
 using MyServerCore.Server.Tcp.Client;
 using MyServerCore.Server.Udp.Client;
 
@@ -30,8 +31,8 @@ public class ServiceManager
      /// </summary>
      public void StartService()
      {
-        
-         
+
+           ClientMessageRouter.GetInstance().StartService(4);
           if (type==0) StartTcpService();
           else
           {

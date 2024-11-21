@@ -56,7 +56,7 @@ namespace MyServerCore.Server.ProtobufService
         /// </summary>
         /// <param name="msg"></param>
         /// <returns></returns>
-        public static byte[] Serialize(IMessage msg)
+        public static byte[] Serialize<T>(T msg) where T:IMessage<T>
         {
             using (MemoryStream rawOutput = new MemoryStream())
             {

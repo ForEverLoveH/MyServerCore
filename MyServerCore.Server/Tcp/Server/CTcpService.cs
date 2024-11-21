@@ -75,6 +75,7 @@ public class CTcpService:TcpService
         if (!string.IsNullOrEmpty(json))
         {
             byte[] message = Encoding.UTF8.GetBytes(json);
+            message=message.Concat(CRCService.CreateWaterByte()).ToArray();
             byte[] crcCode = BitConverter.GetBytes(CRCService.ComputeChecksum(message));
             message = message.Concat(crcCode).ToArray();
             CSendJsonData(message);
@@ -115,8 +116,7 @@ public class CTcpService:TcpService
         byte[] mess = typeCode.Concat(message).ToArray();
         byte[] waterCode = CRCService.CreateWaterByte();
         byte[] m = mess.Concat(waterCode).ToArray();
-        ushort pl = CRCService.ComputeChecksum(m);
-        byte[] crc = BitConverter.GetBytes(pl);
+        byte[] crc = BitConverter.GetBytes(CRCService.ComputeChecksum(m));
         byte[] result = m.Concat(crc).ToArray();
         CSendProtobufData(result);
     }
@@ -130,10 +130,8 @@ public class CTcpService:TcpService
         byte[] buffer = BitConverter.GetBytes(length);
         if (buffer.Length > 0)
         {
-            if (!BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(buffer);
-            }
+            if (!BitConverter.IsLittleEndian) Array.Reverse(buffer);
+
             byte[] result = buffer.Concat(message).ToArray();
             Multicast(result);
         }

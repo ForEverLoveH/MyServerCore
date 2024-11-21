@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf;
 using MyServerCore.Server.CRC;
+using MyServerCore.Server.MessageRouter.Client;
 using MyServerCore.Server.ProtobufService;
 using Newtonsoft.Json;
 using System.Diagnostics.Contracts;
@@ -85,7 +86,8 @@ public class CTcpClient:TcpClient
                         IMessage packMessage = ProtobufSession.ParseFrom(code, data, 0, data.Length);
                         if (packMessage != null)
                         {
-                             
+                            if (ClientMessageRouter.GetInstance().IsRunning)ClientMessageRouter.GetInstance().AddMessageToQueue(this, packMessage);
+                            
                         }
                     }
                 }
@@ -93,6 +95,36 @@ public class CTcpClient:TcpClient
 
 
 
+        }
+        else
+        {
+            byte[] lengthBytes = new byte[4];
+            Array.Copy(buffer, 0, lengthBytes, 0, 4);
+            if (!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
+            int length = BitConverter.ToInt32(lengthBytes, 0);
+            if (length > 0)
+            {
+                byte[] infactMessage = new byte[length];
+                Array.Copy(buffer, 4, infactMessage, 0, length);
+                byte[] messageCode = new byte[infactMessage.Length - 2];
+                byte[] crcCode = new byte[2];
+                Array.Copy(infactMessage, 0, messageCode, 0, messageCode.Length);
+                Array.Copy(infactMessage, infactMessage.Length - 2, crcCode, 0, crcCode.Length);
+                ushort currentCrcCode = BitConverter.ToUInt16(crcCode, 0);
+                ushort computedCrc = CRCService.ComputeChecksum(messageCode);
+                if (currentCrcCode == computedCrc)
+                {
+                    byte[] messages = new byte[messageCode.Length - 2];
+                    Array.Copy(messageCode, 0, messages, 0, messages.Length);
+                    string mess = Encoding.UTF8.GetString(messages);
+                    if (!string.IsNullOrEmpty(mess))
+                    {
+                       Console.WriteLine(string.Format("{0}:{1}","收到服务端json 数据",mess));
+                    }
+                }
+
+
+            }
         }
     }
     #region 发送
@@ -111,11 +143,14 @@ public class CTcpClient:TcpClient
     /// 
     /// </summary>
     /// <param name="message"></param>
-    public void CSendJsonData(string message)
+    public void CSendJsonData(string json)
     {
-        if(string.IsNullOrEmpty(message))return;
-        byte[] data= Encoding.UTF8.GetBytes(message);
-        CSendJsonData(data);
+        if(string.IsNullOrEmpty(json))return;
+        byte[] message = Encoding.UTF8.GetBytes(json);
+        message = message.Concat(CRCService.CreateWaterByte()).ToArray();
+        byte[] crcCode = BitConverter.GetBytes(CRCService.ComputeChecksum(message));
+        message = message.Concat(crcCode).ToArray();
+        CSendJsonData(message);
 
     }
     /// <summary>
@@ -153,8 +188,7 @@ public class CTcpClient:TcpClient
         byte[] mess = typeCode.Concat(message).ToArray();
         byte[] waterCode = CRCService.CreateWaterByte();
         byte[]  m = mess.Concat(waterCode).ToArray();
-        ushort pl = CRCService.ComputeChecksum(m);
-        byte[]crc=BitConverter.GetBytes(pl); 
+        byte[]crc=BitConverter.GetBytes(CRCService.ComputeChecksum(m)); 
         byte[] result = m.Concat(crc).ToArray();
         CSendProtobufData(result);
     }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MyServerCore.Server.CRC
 {
-    public class CRCService
+    public  class CRCService
     {
         private static readonly ushort[] Table = new ushort[256];
 
@@ -37,7 +37,7 @@ namespace MyServerCore.Server.CRC
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        public static ushort ComputeChecksum(byte[] bytes)
+        public static ushort ComputeChecksum( byte[] bytes)
         {
             var crc = 0;
             foreach (var t in bytes)

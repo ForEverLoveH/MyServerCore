@@ -42,7 +42,7 @@ public class CTcpSession:TcpSession
     protected override void OnReceived(byte[] buffer, long offset, long size)
     {
 
-        if (isjson)
+        if (isjson) // json 发送数据 格式 4字节长度+ (数据+ 流水码)+ 2 个字节的 crc16检验码
         {
             byte[] lengthBytes = new byte[4];
             Array.Copy(buffer, 0, lengthBytes, 0, 4);
@@ -52,16 +52,18 @@ public class CTcpSession:TcpSession
             {
                 byte[] infactMessage = new byte[length];
                 Array.Copy(buffer, 4, infactMessage, 0, length);
-                byte[] dataCodes = new byte[infactMessage.Length - 4];
-                Array.Copy(infactMessage, 4, dataCodes, 0, length - 4);
-                byte[] data = new byte[dataCodes.Length - 2];
-                ushort crc = BitConverter.ToUInt16(dataCodes, dataCodes.Length - 2);
-                Array.Copy(data, data, data.Length);
-                ushort computedCrc = CRCService.ComputeChecksum(data);
-                if (computedCrc == crc)
+                byte[] messageCode = new byte[infactMessage.Length - 2];
+                byte[] crcCode = new byte[2];
+                Array.Copy(infactMessage, 0, messageCode, 0, messageCode.Length);
+                Array.Copy(infactMessage, infactMessage.Length - 2, crcCode, 0, crcCode.Length);
+                ushort currentCrcCode = BitConverter.ToUInt16(crcCode, 0);
+                ushort computedCrc = CRCService.ComputeChecksum(messageCode);
+                if(currentCrcCode == computedCrc)
                 {
-                    string infact = Encoding.UTF8.GetString(data);
-                    Console.WriteLine("收到客户端:" + infact);
+                    byte[] messages = new byte[messageCode.Length - 2];
+                    Array.Copy(messageCode, 0, messages, 0, messages.Length);
+                    string mess=Encoding.UTF8.GetString(messages);
+                    Console.WriteLine(string.Format("{0}:{1}", "收到客户端json 数据", mess));
                 }
             }
         }
@@ -79,7 +81,6 @@ public class CTcpSession:TcpSession
                 byte[] crcCode = new byte[2];
                 Array.Copy(infactMessage,0,messageCode,0,messageCode.Length);
                 Array.Copy(infactMessage, infactMessage.Length - 2, crcCode,0,crcCode.Length);
-
                 ushort currentCrcCode=BitConverter.ToUInt16(crcCode,0);
                 ushort computedCrc = CRCService.ComputeChecksum(messageCode);
                 if(currentCrcCode == computedCrc)

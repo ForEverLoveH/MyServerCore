@@ -111,10 +111,7 @@ namespace MyServerCore.Server.MessageRouter
                         if (pMessage != null)
                         {
                             var packMessage = pMessage.message;
-                            if (packMessage != null)
-                            {
-                                ExcuteLoopMessage(packMessage, pMessage.session);
-                            }
+                            if (packMessage != null)ExcuteLoopMessage(packMessage, pMessage.session);    
                         }
                     }
                     else
