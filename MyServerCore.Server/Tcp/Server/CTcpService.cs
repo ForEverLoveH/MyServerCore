@@ -109,11 +109,15 @@ public class CTcpService:TcpService
     public void CSendProtobufData<T>(T data) where T : IMessage<T>
     {
         if (data == null) return;
-        int code=ProtobufSession.SeqCode(data.GetType());
-        byte[] typeCode= BitConverter.GetBytes(code);
-        byte[] message=ProtobufSession.Serialize(data);
-        byte[] crcCode=BitConverter.GetBytes(CRCService.ComputeChecksum(message));
-        byte[] result = typeCode.Concat(message.Concat(crcCode)).ToArray();
+        int code = ProtobufSession.SeqCode(data.GetType());
+        byte[] typeCode = BitConverter.GetBytes(code);
+        byte[] message = ProtobufSession.Serialize(data);
+        byte[] mess = typeCode.Concat(message).ToArray();
+        byte[] waterCode = CRCService.CreateWaterByte();
+        byte[] m = mess.Concat(waterCode).ToArray();
+        ushort pl = CRCService.ComputeChecksum(m);
+        byte[] crc = BitConverter.GetBytes(pl);
+        byte[] result = m.Concat(crc).ToArray();
         CSendProtobufData(result);
     }
     /// <summary>

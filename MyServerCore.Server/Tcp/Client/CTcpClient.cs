@@ -14,17 +14,18 @@ namespace MyServerCore.Server.Tcp.Client;
 public class CTcpClient:TcpClient
 {
     private bool _stop;
+    private bool isJson = false;
     /// <summary>
     /// 
     /// </summary>
     /// <param name="ipaddress"></param>
     /// <param name="port"></param>
-    public CTcpClient(string ipaddress, int port) : base(ipaddress, port)
+    public CTcpClient(string ipaddress, int port,bool isJson = false) : base(ipaddress, port)
     {
         
     }
 
-    public CTcpClient(IPEndPoint ipEndPoint) : base(ipEndPoint)
+    public CTcpClient(IPEndPoint ipEndPoint,bool isJson = false) : base(ipEndPoint)
     {
         
     }
@@ -54,23 +55,44 @@ public class CTcpClient:TcpClient
     /// <param name="size"></param>
     protected override void OnReceived(byte[] buffer, long offset, long size)
     {
-        byte[] lengthBytes = new byte[4];
-        Array.Copy(buffer, 0, lengthBytes, 0, 4);
-        if (!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
-        int length = BitConverter.ToInt32(lengthBytes, 0);
-        if (length > 0)
-        {
-            byte[] infactMessage = new byte[length];
-            Array.Copy(buffer, 4, infactMessage, 0, length);
-            byte[]   data= new byte[infactMessage.Length-2];
-            ushort crc = BitConverter.ToUInt16(infactMessage, infactMessage.Length - 2);
-            Array.Copy(infactMessage, data, data.Length);
-            ushort computedCrc = CRCService.ComputeChecksum(data);
-            if (computedCrc == crc)
+        if (!isJson) 
+        { 
+            byte[] lengthBytes = new byte[4];
+            Array.Copy(buffer, 0, lengthBytes, 0, 4);
+            if (!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
+            int length = BitConverter.ToInt32(lengthBytes, 0);
+            if (length > 0)
             {
-                string message = Encoding.UTF8.GetString(data, (int)offset, (int)size);
-                Console.WriteLine("收到服务端:" + message);
+                byte[] infactMessage = new byte[length];
+                Array.Copy(buffer, 4, infactMessage, 0, length);
+                byte[] messageCode = new byte[infactMessage.Length - 2];
+                byte[] crcCode = new byte[2];
+                Array.Copy(infactMessage, 0, messageCode, 0, messageCode.Length);
+                Array.Copy(infactMessage, infactMessage.Length - 2, crcCode, 0, crcCode.Length);
+                ///
+                ushort currentCrcCode = BitConverter.ToUInt16(crcCode, 0);
+                ushort computedCrc = CRCService.ComputeChecksum(messageCode);
+                if (currentCrcCode == computedCrc)
+                {
+                    byte[] messages = new byte[messageCode.Length - 2];
+                    Array.Copy(messageCode, 0, messages, 0, messages.Length);
+                    int code = BitConverter.ToInt32(messages, 0);
+                    Type type = ProtobufSession.SeqType(code);
+                    if (type.IsClass && typeof(IMessage).IsAssignableFrom(type))
+                    {
+                        byte[] data = new byte[messages.Length - 4];
+                        Array.Copy(messages, 4, data, 0, data.Length);
+                        IMessage packMessage = ProtobufSession.ParseFrom(code, data, 0, data.Length);
+                        if (packMessage != null)
+                        {
+                             
+                        }
+                    }
+                }
             }
+
+
+
         }
     }
     #region 发送
@@ -128,8 +150,12 @@ public class CTcpClient:TcpClient
         int code = ProtobufSession.SeqCode(data.GetType());
         byte[] typeCode = BitConverter.GetBytes(code);
         byte[] message = ProtobufSession.Serialize(data);
-        byte[]crc=BitConverter.GetBytes(CRCService.ComputeChecksum(message));
-        byte[] result = typeCode.Concat(message.Concat(crc)).ToArray();
+        byte[] mess = typeCode.Concat(message).ToArray();
+        byte[] waterCode = CRCService.CreateWaterByte();
+        byte[]  m = mess.Concat(waterCode).ToArray();
+        ushort pl = CRCService.ComputeChecksum(m);
+        byte[]crc=BitConverter.GetBytes(pl); 
+        byte[] result = m.Concat(crc).ToArray();
         CSendProtobufData(result);
     }
     /// <summary>

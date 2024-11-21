@@ -87,6 +87,7 @@ namespace MyServerCore.Server.ProtobufService
         {
             return mDict2[type];
         }
+
         /// <summary>
         /// 
         /// </summary>

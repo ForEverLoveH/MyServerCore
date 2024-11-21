@@ -65,7 +65,7 @@ public class CTcpSession:TcpSession
                 }
             }
         }
-        else
+        else   // protobuf 发送数据 格式 4字节长度+ (int 表示 type 数据 + 数据+ 流水码)  +2 个字节的 crc16检验码
         {
             byte[] lengthBytes = new byte[4];
             Array.Copy(buffer, 0, lengthBytes, 0, 4);
@@ -73,31 +73,34 @@ public class CTcpSession:TcpSession
             int length = BitConverter.ToInt32(lengthBytes, 0);
             if (length > 0)
             {
-                byte[] infactMessage = new byte[length];
+                byte[] infactMessage = new byte[length]; 
                 Array.Copy(buffer, 4, infactMessage, 0, length);
-                int code = BitConverter.ToInt32(infactMessage, 0);
-                Type type = ProtobufSession.SeqType(code);
-                if (type.IsClass && typeof(IMessage).IsAssignableFrom(type))
+                byte[] messageCode = new byte[infactMessage.Length - 2];
+                byte[] crcCode = new byte[2];
+                Array.Copy(infactMessage,0,messageCode,0,messageCode.Length);
+                Array.Copy(infactMessage, infactMessage.Length - 2, crcCode,0,crcCode.Length);
+
+                ushort currentCrcCode=BitConverter.ToUInt16(crcCode,0);
+                ushort computedCrc = CRCService.ComputeChecksum(messageCode);
+                if(currentCrcCode == computedCrc)
                 {
-                    byte[] data = new byte[length - 4];
-                    Array.Copy(infactMessage, 4, data, 0, length - 4);
-                    byte[] dataCodes = new byte[data.Length - 2];
-                    ushort crc = BitConverter.ToUInt16(dataCodes, dataCodes.Length - 2);
-                    Array.Copy(data, dataCodes, dataCodes.Length);
-                    ushort computedCrc = CRCService.ComputeChecksum(data);
-                    if (computedCrc == crc)
+                    byte[] messages=new byte[messageCode.Length-2];
+                    Array.Copy(messageCode,0,messages,0,messages.Length);
+                    int code= BitConverter.ToInt32(messages, 0);
+                    Type type= ProtobufSession.SeqType(code);
+                    if (type.IsClass && typeof(IMessage).IsAssignableFrom(type))
                     {
-                        IMessage message = ProtobufSession.ParseFrom(code, dataCodes, 0, dataCodes.Length);
-                        if (ServiceMessageRouter.GetInstance().IsRunning)
+                         byte[] data = new byte[messages.Length - 4]; 
+                         Array.Copy(messages, 4, data, 0, data.Length);
+                        IMessage packMessage = ProtobufSession.ParseFrom(code, data, 0, data.Length );
+                        if (packMessage != null)
                         {
-                            ServiceMessageRouter.GetInstance().AddMessageToQueue(this, message);
+                            if(MessageRouter.ServiceMessageRouter.GetInstance().IsRunning)
+                                MessageRouter.ServiceMessageRouter.GetInstance().AddMessageToQueue(this,packMessage);
+                            Console.WriteLine("收到客户端:" + packMessage);
                         }
-
-                        Console.WriteLine($"收到客户端:{message}");
-
                     }
-                }
-
+                }                 
             }
         }
 

@@ -47,5 +47,42 @@ namespace MyServerCore.Server.CRC
             }
             return (ushort)crc;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        private static ushort lastWaterByte =0;
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public static byte[] CreateWaterByte()
+        {
+            Random random = new Random();
+            ushort waterCode = 0;
+            do
+            {
+                waterCode = (ushort)random.Next(ushort.MaxValue + 1); // 生成随机数
+            }
+            while(waterCode==lastWaterByte);
+            byte[] serialNumberBytes = GenerateSerialNumber(waterCode);
+            lastWaterByte = waterCode; // 更新上一次的流水码
+            return serialNumberBytes;
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="serialNumber"></param>
+        /// <returns></returns>
+        static byte[] GenerateSerialNumber(ushort serialNumber)
+        {
+            // 将流水码转换为2个字节的数组
+            byte[] bytes = BitConverter.GetBytes(serialNumber);
+            if (BitConverter.IsLittleEndian)
+            {
+                // 如果是小端字节序，需要反转字节顺序
+                Array.Reverse(bytes);
+            }
+            return bytes;
+        }
     }
 }
