@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.Intrinsics.Arm;
 using System.Text;
+using MyServerCore.Log.Log;
 using TcpClient = MyServerCode.Summer.Service.Tcp.TcpClient;
 
 namespace MyServerCore.Server.Tcp.Client;
@@ -33,7 +34,7 @@ public class CTcpClient:TcpClient
 
     protected override void OnConnected()
     {
-        Console.WriteLine($"Chat TCP client connected a new session with Id {Id}");
+         MyLogTool.ColorLog(YNetLogColor.Green,$"Chat TCP client connected a new session with Id {Id}");
         StartHeartBeatService();
     }
 
@@ -41,7 +42,7 @@ public class CTcpClient:TcpClient
 
     protected override void OnDisconnected()
     {
-        Console.WriteLine($"Chat TCP client disconnected a session with Id {Id}");
+        MyLogTool.ColorLog(YNetLogColor.Blue,$"Chat TCP client disconnected a session with Id {Id}");
         // Wait for a while...
         Thread.Sleep(1000);
         // Try to connect again
@@ -119,7 +120,7 @@ public class CTcpClient:TcpClient
                     string mess = Encoding.UTF8.GetString(messages);
                     if (!string.IsNullOrEmpty(mess))
                     {
-                       Console.WriteLine(string.Format("{0}:{1}","收到服务端json 数据",mess));
+                        MyLogTool.ColorLog(YNetLogColor.Blue,string.Format("{0}:{1}","收到服务端json 数据",mess));
                     }
                 }
 
@@ -235,6 +236,6 @@ public class CTcpClient:TcpClient
     #endregion
     protected override void OnError(SocketError error)
     {
-        Console.WriteLine($"Chat TCP client caught an error with code {error}");
+        MyLogTool.Error($"Chat TCP client caught an error with code {error}");
     }
 }

@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\MyServerCode.Summer\MyServerCode.Summer.csproj" />
+      <ProjectReference Include="..\MyServerCore.Log\MyServerCore.Log.csproj" />
     </ItemGroup>
 
 </Project>

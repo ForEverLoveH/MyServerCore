@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf;
 using Google.Protobuf.Reflection;
+using MyServerCore.Log.Log;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,7 +46,7 @@ namespace MyServerCore.Server.ProtobufService
             {
                 var fname = list[i];
                 var t = _registry[fname];
-                Console.WriteLine("Proto类型注册：{0} - {1}", i, fname);
+              MyLogTool.ColorLog(YNetLogColor.Yellow,"Proto类型注册：{0} - {1}", i, fname);
                 mDict1[i] = t;
                 mDict2[t] = i;
             }
