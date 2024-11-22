@@ -34,7 +34,7 @@ public class CTcpClient:TcpClient
 
     protected override void OnConnected()
     {
-         MyLogTool.ColorLog(YNetLogColor.Green,$"Chat TCP client connected a new session with Id {Id}");
+         MyLogTool.ColorLog(MyLogColor.Green,$"Chat TCP client connected a new session with Id {Id}");
         StartHeartBeatService();
     }
 
@@ -42,7 +42,7 @@ public class CTcpClient:TcpClient
 
     protected override void OnDisconnected()
     {
-        MyLogTool.ColorLog(YNetLogColor.Blue,$"Chat TCP client disconnected a session with Id {Id}");
+        MyLogTool.ColorLog(MyLogColor.Blue,$"Chat TCP client disconnected a session with Id {Id}");
         // Wait for a while...
         Thread.Sleep(1000);
         // Try to connect again
@@ -120,7 +120,7 @@ public class CTcpClient:TcpClient
                     string mess = Encoding.UTF8.GetString(messages);
                     if (!string.IsNullOrEmpty(mess))
                     {
-                        MyLogTool.ColorLog(YNetLogColor.Blue,string.Format("{0}:{1}","收到服务端json 数据",mess));
+                        MyLogTool.ColorLog(MyLogColor.Blue,string.Format("{0}:{1}","收到服务端json 数据",mess));
                     }
                 }
 

@@ -32,7 +32,7 @@ public class CTcpSession:TcpSession
         Guid guid = Id;
         if (!_connectedClient.ContainsKey(guid))
             _connectedClient.TryAdd(Id, mscoSocket);
-        MyLogTool.ColorLog(YNetLogColor.Blue,$"客户端：{guid}已连接");
+        MyLogTool.ColorLog(MyLogColor.Blue,$"客户端：{guid}已连接");
     }
     /// <summary>
     /// 
@@ -64,7 +64,7 @@ public class CTcpSession:TcpSession
                     byte[] messages = new byte[messageCode.Length - 2];
                     Array.Copy(messageCode, 0, messages, 0, messages.Length);
                     string mess=Encoding.UTF8.GetString(messages);
-                    MyLogTool.ColorLog(YNetLogColor.Green,string.Format("{0}:{1}", "收到客户端json 数据", mess));
+                    MyLogTool.ColorLog(MyLogColor.Green,string.Format("{0}:{1}", "收到客户端json 数据", mess));
                 }
             }
         }

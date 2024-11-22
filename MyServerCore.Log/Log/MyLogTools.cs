@@ -14,7 +14,7 @@ namespace MyServerCore.Log.Log
         #region 设置日志
         internal static bool IsDisableLog = false;
         private static Action<string> _logFunc;
-        private static Action<YNetLogColor, string> _colorLogFunc;
+        private static Action<MyLogColor, string> _colorLogFunc;
         private static Action<string> _warnFunc;
         private static Action<string> _errorFunc;
 
@@ -22,7 +22,7 @@ namespace MyServerCore.Log.Log
         {
            _logFunc = logFunc;
         }
-        public static void SetupColorLogFunc(Action<YNetLogColor, string> colorLogFunc)
+        public static void SetupColorLogFunc(Action<MyLogColor, string> colorLogFunc)
         {
            _colorLogFunc = colorLogFunc;
         }
@@ -47,10 +47,10 @@ namespace MyServerCore.Log.Log
             }
             else
             {
-                ConsoleLog(message, YNetLogColor.None);
+                ConsoleLog(message, MyLogColor.None);
             }
         }
-        public static void ColorLog(YNetLogColor color, string message, params object[] args)
+        public static void ColorLog(MyLogColor color, string message, params object[] args)
         {
             if (IsDisableLog) { return; }
             message = string.Format(message, args);
@@ -73,7 +73,7 @@ namespace MyServerCore.Log.Log
             }
             else
             {
-                ConsoleLog(message, YNetLogColor.Yellow);
+                ConsoleLog(message, MyLogColor.Yellow);
             }
         }
         public static void Error(string message, params object[] args)
@@ -86,46 +86,46 @@ namespace MyServerCore.Log.Log
             }
             else
             {
-                ConsoleLog(message, YNetLogColor.Red);
+                ConsoleLog(message, MyLogColor.Red);
             }
         }
-        private static void ConsoleLog(string message, YNetLogColor color)
+        private static void ConsoleLog(string message, MyLogColor color)
         {
             if (IsDisableLog) { return; }
             message = string.Format("# YKCPNetThreadID {0} => {1}", Thread.CurrentThread.ManagedThreadId, message);
             switch (color)
             {
-                case YNetLogColor.Red:
+                case MyLogColor.Red:
                     Console.ForegroundColor = ConsoleColor.DarkRed;
                     Console.WriteLine(message);
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     break;
-                case YNetLogColor.Green:
+                case MyLogColor.Green:
                     Console.ForegroundColor = ConsoleColor.DarkGreen;
                     Console.WriteLine(message);
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     break;
-                case YNetLogColor.Blue:
+                case MyLogColor.Blue:
                     Console.ForegroundColor = ConsoleColor.DarkBlue;
                     Console.WriteLine(message);
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     break;
-                case YNetLogColor.Cyan:
+                case MyLogColor.Cyan:
                     Console.ForegroundColor = ConsoleColor.DarkCyan;
                     Console.WriteLine(message);
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     break;
-                case YNetLogColor.Magentna:
+                case MyLogColor.Magentna:
                     Console.ForegroundColor = ConsoleColor.DarkMagenta;
                     Console.WriteLine(message);
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     break;
-                case YNetLogColor.Yellow:
+                case MyLogColor.Yellow:
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                     Console.WriteLine(message);
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     break;
-                case YNetLogColor.None:
+                case MyLogColor.None:
                 default:
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     Console.WriteLine(message);

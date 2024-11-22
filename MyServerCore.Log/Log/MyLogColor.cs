@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MyServerCore.Log.Log
 {
-    public enum YNetLogColor
+    public enum MyLogColor
     {
         Red, Green, Blue, Cyan, Magentna, Yellow, None,
     }

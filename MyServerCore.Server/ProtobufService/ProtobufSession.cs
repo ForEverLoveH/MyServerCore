@@ -46,7 +46,7 @@ namespace MyServerCore.Server.ProtobufService
             {
                 var fname = list[i];
                 var t = _registry[fname];
-              MyLogTool.ColorLog(YNetLogColor.Yellow,"Proto类型注册：{0} - {1}", i, fname);
+              MyLogTool.ColorLog(MyLogColor.Yellow,"Proto类型注册：{0} - {1}", i, fname);
                 mDict1[i] = t;
                 mDict2[t] = i;
             }
