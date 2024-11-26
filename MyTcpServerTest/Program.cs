@@ -3,7 +3,7 @@
 using MyTcpServerTest;
 
 Console.WriteLine("Hello, World!");
-ServiceManager serviceManager = new ServiceManager(0);
+ServiceManager serviceManager = new ServiceManager(2);
 serviceManager.StartService();
 
 
