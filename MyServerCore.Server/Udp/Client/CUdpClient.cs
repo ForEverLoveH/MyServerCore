@@ -1,6 +1,10 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Google.Protobuf;
+using MyServerCore.Server.CRC;
+using MyServerCore.Server.ProtobufService;
+using MyServerCore.Server.RSA;
 using Newtonsoft.Json;
 using UdpClient = MyServerCode.Summer.Service.UDP.UdpClient;
 
@@ -100,7 +104,47 @@ public class CUdpClient:UdpClient
                 Array.Reverse(buffer);
             }
             byte[] result = buffer.Concat(message).ToArray();
-            Send(result);   
+            SendAsync(result);   
+        }
+    }
+    #endregion
+
+    #region protobuf 发送
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="data"></param>
+    public void CSendProtobufData<T>(T data) where T : IMessage<T>
+    {
+        
+        if (data == null) return;
+        int code = ProtobufSession.SeqCode(data.GetType());
+        byte[] typeCode = BitConverter.GetBytes(code);
+        byte[] message = ProtobufSession.Serialize(data);
+        byte[] mess = typeCode.Concat(message).ToArray();
+        byte[] waterCode = CRCService.CreateWaterByte();
+        byte[] m = mess.Concat(waterCode).ToArray();
+        byte[] crc = BitConverter.GetBytes(CRCService.ComputeChecksum(m));
+        byte[] result = m.Concat(crc).ToArray();
+        CSendProtobufData(result);
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="message"></param>
+    public void CSendProtobufData(byte[] message)
+    {
+        int length = message.Length;
+        byte[] buffer = BitConverter.GetBytes(length);
+        if (buffer.Length > 0)
+        {
+            if (!BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(buffer);
+            }
+            byte[] result = buffer.Concat(message).ToArray();
+            SendAsync(result);
         }
     }
     #endregion

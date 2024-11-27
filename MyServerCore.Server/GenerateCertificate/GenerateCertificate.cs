@@ -166,21 +166,37 @@ namespace MyServerCore.Server.GenerateCertificate
             };
         }
         /// <summary>
-        /// 加载pfx证书
+        /// 加载pfx证书的key
         /// </summary>
         /// <param name="pfxPath"></param>
         /// <param name="password"></param>
         /// <returns>返回私钥 公钥</returns>
-        public Tuple<string, string>  LoadingPfxCertificate(string pfxPath, string password)
+        public Tuple<string, string>  LoadingPfxCertificateKey(string pfxPath, string password)
         {
             X509Certificate2 pfx = new X509Certificate2(pfxPath, password, X509KeyStorageFlags.Exportable);
             var keyPair = DotNetUtilities.GetKeyPair(pfx.PrivateKey);
+            //var keyPair = pfx.GetRSAPrivateKey();
             var subjectPublicKeyInfo = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(keyPair.Public);
             var privateKeyInfo = PrivateKeyInfoFactory.CreatePrivateKeyInfo(keyPair.Private);
             var privateKey = Base64.ToBase64String(privateKeyInfo.ParsePrivateKey().GetEncoded());
             var publicKey = Base64.ToBase64String(subjectPublicKeyInfo.GetEncoded());
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             return new Tuple<string, string>(publicKey, privateKey);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pfxPath"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        public Tuple<DateTime ,DateTime >LoadingPfxCertificateTime(string pfxPath, string password)
+        {
+            X509Certificate2 pfx = new X509Certificate2(pfxPath, password, X509KeyStorageFlags.Exportable);
+            DateTime startDate = pfx.NotBefore;
+            // 获取证书的开始时间
+            DateTime endDate = pfx. NotAfter;
+            return new Tuple<DateTime, DateTime>(startDate, endDate);
+
         }
     }
 }

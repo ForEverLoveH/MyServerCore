@@ -1,6 +1,10 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Google.Protobuf;
+using MyServerCore.Server.CRC;
+using MyServerCore.Server.ProtobufService;
+using MyServerCore.Server.RSA;
 using Newtonsoft.Json;
 
 namespace MyServerCore.Server.Udp.Server;
@@ -47,8 +51,8 @@ public class CUdpServer:MyServerCode.Summer.Service.UDP.UdpServer
     {
         Console.WriteLine($"Echo UDP server caught an error with code {error}");
     }
-
-    public  void CSendData<T>(T data) where T : class
+    #region 发送 json数据
+    public void CSendData<T>(T data) where T : class
     {
         if(data == null)return  ;
         string json = JsonConvert.SerializeObject(data);
@@ -81,9 +85,49 @@ public class CUdpServer:MyServerCode.Summer.Service.UDP.UdpServer
                 Array.Reverse(buffer);
             }
             byte[] result = buffer.Concat(message).ToArray();
-            Multicast(result);
+            MulticastAsync(result);
         }
     }
+    #endregion
 
-    
+    #region protobuf 发送数据
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="data"></param>
+    public void CSendProtobufData<T>(T data) where T : IMessage<T>
+    {
+        
+        if (data == null) return;
+        int code = ProtobufSession.SeqCode(data.GetType());
+        byte[] typeCode = BitConverter.GetBytes(code);
+        byte[] message = ProtobufSession.Serialize(data);
+        byte[] mess = typeCode.Concat(message).ToArray();
+        byte[] waterCode = CRCService.CreateWaterByte();
+        byte[] m = mess.Concat(waterCode).ToArray();
+        byte[] crc = BitConverter.GetBytes(CRCService.ComputeChecksum(m));
+        byte[] result = m.Concat(crc).ToArray();
+        CSendProtobufData(result);
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="message"></param>
+    public void CSendProtobufData(byte[] message)
+    {
+        int length = message.Length;
+        byte[] buffer = BitConverter.GetBytes(length);
+        if (buffer.Length > 0)
+        {
+            if (!BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(buffer);
+            }
+            byte[] result = buffer.Concat(message).ToArray();
+            MulticastAsync(result);
+        }
+    }
+    #endregion
+
 }

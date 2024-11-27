@@ -35,14 +35,30 @@ public class ServiceManager
     private void StartCSSlService()
     {
         string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cert\\");
-        string friendlyName = $"{Guid.NewGuid().ToString("N")}dpps.fun";
+        //string friendlyName = $"{Guid.NewGuid().ToString("N")}dpps.fun";
+        string friendlyName = "Server_dpps.fun";
         string pfxPath = $"{file}{friendlyName}.pfx";
         string certPath = $"{file}{friendlyName}.cer";
-        if(!Directory.Exists(file)) Directory.CreateDirectory(file);
+        MyGenerateCertificate myGenerateCertificate = new MyGenerateCertificate(DateTime.Now.AddYears(1), "qwerty", friendlyName);
+        bool exist = true;
+        if (!Directory.Exists(file)) Directory.CreateDirectory(file);
         if (!File.Exists(pfxPath))
-        {
-            MyGenerateCertificate myGenerateCertificate= new MyGenerateCertificate(DateTime.Now.AddYears(1), "qwerty", friendlyName);
+        {   
+            exist= false;
             myGenerateCertificate.CreateGenerateCertificate(certPath,pfxPath, friendlyName);
+        }
+        if (exist)
+        {
+            //证书过期
+            DateTime now = DateTime.Now;
+            Tuple<DateTime, DateTime> tuples = myGenerateCertificate.LoadingPfxCertificateTime(pfxPath, "qwerty");
+            if (now > tuples.Item2)
+            {
+                File.Delete(pfxPath);
+                File.Delete(certPath);
+                myGenerateCertificate.CreateGenerateCertificate(certPath, pfxPath, friendlyName);
+                exist= true;
+            }
         }
         var context = new SslContext(SslProtocols.Tls13, new X509Certificate2(pfxPath, "qwerty"));
         _sslServer = new CSslServer(context,IPAddress.Parse("127.0.0.1"), 9996);

@@ -57,14 +57,26 @@ public class ServiceManager
     private void StarSSLClientService()
     {
         string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cert\\");
-        string friendlyName = $"{Guid.NewGuid().ToString("N")}dpps.fun";
+        //string friendlyName = $"{Guid.NewGuid().ToString("N")}dpps.fun";
+        string friendlyName = "Client_dpps.fun";
         string pfxPath = $"{file}{friendlyName}.pfx";
         string certPath = $"{file}{friendlyName}.cer";
         if (!Directory.Exists(file)) Directory.CreateDirectory(file);
-        if (!File.Exists(pfxPath))
+        MyGenerateCertificate myGenerateCertificate = new MyGenerateCertificate(DateTime.Now.AddYears(1), "qwerty", friendlyName);
+        bool exist = true;
+        if (!File.Exists(pfxPath)) { myGenerateCertificate.CreateGenerateCertificate(certPath, pfxPath, friendlyName);   exist = false; }
+        if (exist)
         {
-            MyGenerateCertificate myGenerateCertificate = new MyGenerateCertificate(DateTime.Now.AddYears(1), "qwerty", friendlyName);
-            myGenerateCertificate.CreateGenerateCertificate(certPath, pfxPath, friendlyName);
+            //当前证书过期
+            DateTime now = DateTime.Now;
+            Tuple<DateTime, DateTime> tuples = myGenerateCertificate.LoadingPfxCertificateTime(pfxPath, "qwerty");
+            if (now > tuples.Item2)
+            {
+                File.Delete(pfxPath);
+                File.Delete(certPath);
+                exist = false;
+                myGenerateCertificate.CreateGenerateCertificate(certPath, pfxPath, friendlyName);
+            }
         }
         var context = new SslContext(SslProtocols.Tls13, new X509Certificate2(pfxPath, "qwerty"), (sender, certificate, chain, sslPolicyErrors) => true);
         _csslClient = new CSslClient(context, "127.0.0.1", 9996);
@@ -89,6 +101,7 @@ public class ServiceManager
      {
         if(type==0) _cTcpClient.CSendJsonData(json);
         else if(type==1)  _udpclient.CSend(json);
+        else if(type==2)_csslClient.CSend(json);
      }
     /// <summary>
     /// 
@@ -98,5 +111,8 @@ public class ServiceManager
     public void SendData<T>(T data)  where T : IMessage<T>
     {
         if (type == 0) _cTcpClient.CSendProtobufData(data);
+        else if (type == 1) _udpclient.CSendProtobufData(data);
+        else if (type == 2) _csslClient.CSendProtobufData(data);
+
     }
 }
