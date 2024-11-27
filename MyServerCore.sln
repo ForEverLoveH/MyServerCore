@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyTcpServerTest", "MyTcpSer
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyTcpClientTest", "MyTcpClientTest\MyTcpClientTest.csproj", "{68E35D5F-353C-472E-A7AE-60BE70A8469B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyServerCore.Log", "MyServerCore.Log\MyServerCore.Log.csproj", "{798DE7ED-F191-467D-8E95-955D345994CA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyServerCore.Log", "MyServerCore.Log\MyServerCore.Log.csproj", "{798DE7ED-F191-467D-8E95-955D345994CA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
