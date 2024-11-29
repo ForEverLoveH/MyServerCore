@@ -2,7 +2,9 @@
 using System.Net.Sockets;
 using System.Text;
 using Google.Protobuf;
+using MyServerCore.Log.Log;
 using MyServerCore.Server.CRC;
+using MyServerCore.Server.MessageRouter.Client;
 using MyServerCore.Server.ProtobufService;
 using MyServerCore.Server.RSA;
 using Newtonsoft.Json;
@@ -12,20 +14,25 @@ namespace MyServerCore.Server.Udp.Client;
 
 public class CUdpClient:UdpClient
 {
-    public CUdpClient(IPAddress address, int port) : base(address, port)
+    private bool isJson = false;
+    public CUdpClient(IPAddress address, int port, bool isJson = false) : base(address, port)
     {
+        this.isJson = isJson;
     }
 
-    public CUdpClient(string address, int port) : base(address, port)
+    public CUdpClient(string address, int port, bool isJson = false) : base(address, port)
     {
+        this.isJson = isJson;
     }
 
-    public CUdpClient(DnsEndPoint endpoint) : base(endpoint)
+    public CUdpClient(DnsEndPoint endpoint, bool isJson = false) : base(endpoint)
     {
+        this.isJson = isJson;
     }
 
-    public CUdpClient(IPEndPoint endpoint) : base(endpoint)
+    public CUdpClient(IPEndPoint endpoint, bool isJson = false) : base(endpoint)
     {
+        this.isJson = isJson;
     }
     protected override void OnConnected()
     {
@@ -49,17 +56,83 @@ public class CUdpClient:UdpClient
 
     protected override void OnReceived(EndPoint endpoint, byte[] buffer, long offset, long size)
     {
-        byte[] lengthBytes = new byte[4];
-        Array.Copy(buffer, 0, lengthBytes, 0, 4);
-        if(!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
-        int length = BitConverter.ToInt32(lengthBytes, 0);
-        if(length > 0)
+        if (!isJson)
         {
-            byte[] infactMessage = new byte[length];
-            Array.Copy(buffer, 4, infactMessage, 0, length);
-            string message = Encoding.UTF8.GetString(infactMessage);
-            Console.WriteLine("收到服务端:"+message);
-        }  
+            byte[] lengthBytes = new byte[4];
+            Array.Copy(buffer, 0, lengthBytes, 0, 4);
+            if (!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
+            int length = BitConverter.ToInt32(lengthBytes, 0);
+            if (length > 0)
+            {
+                byte[] infactMessage = new byte[length];
+                Array.Copy(buffer, 4, infactMessage, 0, length);
+                byte[] messageCode = new byte[infactMessage.Length - 2];
+                byte[] crcCode = new byte[2];
+                Array.Copy(infactMessage, 0, messageCode, 0, messageCode.Length);
+                Array.Copy(infactMessage, infactMessage.Length - 2, crcCode, 0, crcCode.Length);
+                ///
+                ushort currentCrcCode = BitConverter.ToUInt16(crcCode, 0);
+                ushort computedCrc = CRCService.ComputeChecksum(messageCode);
+                if (currentCrcCode == computedCrc)
+                {
+                    byte[] messages = new byte[messageCode.Length - 2];
+                    Array.Copy(messageCode, 0, messages, 0, messages.Length);
+                    int code = BitConverter.ToInt32(messages, 0);
+                    Type type = ProtobufSession.SeqType(code);
+                    if (type.IsClass && typeof(IMessage).IsAssignableFrom(type))
+                    {
+                        byte[] data = new byte[messages.Length - 4];
+                        Array.Copy(messages, 4, data, 0, data.Length);
+                        IMessage packMessage = ProtobufSession.ParseFrom(code, data, 0, data.Length);
+                        if (packMessage != null)
+                        {
+                            if (ClientMessageRouter.GetInstance().IsRunning)
+                            {
+                                MyBaseClient myBaseClient = new MyBaseClient()
+                                {
+                                    udpClient = this,
+                                };
+                                ClientMessageRouter.GetInstance().AddMessageToQueue(myBaseClient, packMessage);
+                            }
+
+                        }
+                    }
+                }
+            }
+
+
+
+        }
+        else
+        {
+            byte[] lengthBytes = new byte[4];
+            Array.Copy(buffer, 0, lengthBytes, 0, 4);
+            if (!BitConverter.IsLittleEndian) Array.Reverse(lengthBytes);
+            int length = BitConverter.ToInt32(lengthBytes, 0);
+            if (length > 0)
+            {
+                byte[] infactMessage = new byte[length];
+                Array.Copy(buffer, 4, infactMessage, 0, length);
+                byte[] messageCode = new byte[infactMessage.Length - 2];
+                byte[] crcCode = new byte[2];
+                Array.Copy(infactMessage, 0, messageCode, 0, messageCode.Length);
+                Array.Copy(infactMessage, infactMessage.Length - 2, crcCode, 0, crcCode.Length);
+                ushort currentCrcCode = BitConverter.ToUInt16(crcCode, 0);
+                ushort computedCrc = CRCService.ComputeChecksum(messageCode);
+                if (currentCrcCode == computedCrc)
+                {
+                    byte[] messages = new byte[messageCode.Length - 2];
+                    Array.Copy(messageCode, 0, messages, 0, messages.Length);
+                    string mess = Encoding.UTF8.GetString(messages);
+                    if (!string.IsNullOrEmpty(mess))
+                    {
+                        MyLogTool.ColorLog(MyLogColor.Blue, string.Format("{0}:{1}", "收到服务端json 数据", mess));
+                    }
+                }
+
+
+            }
+        }
     }
 
     protected override void OnError(SocketError error)
@@ -148,5 +221,6 @@ public class CUdpClient:UdpClient
         }
     }
     #endregion
+
     private bool _stop;
 }

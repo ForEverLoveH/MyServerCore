@@ -44,7 +44,7 @@ namespace MyServerCore.Server.MessageRouter.Client
         /// <typeparam name="T"></typeparam>
         /// <param name="session"></param>
         /// <param name="message"></param>
-        public delegate void MessageHandler<T>(CTcpClient session, T message) where T : IMessage;
+        public delegate void MessageHandler<T>(MyBaseClient session, T message) where T : IMessage;
         /// <summary>
         /// 
         /// </summary>
@@ -55,13 +55,13 @@ namespace MyServerCore.Server.MessageRouter.Client
         /// <typeparam name="T"></typeparam>
         /// <param name="session"></param>
         /// <param name="message"></param>
-        public void AddMessageToQueue<T>(CTcpClient session, T message) where T : IMessage
+        public void AddMessageToQueue<T>(MyBaseClient session, T message) where T : IMessage
         {
             lock (_messageQueue)
             {
                 _messageQueue.Enqueue(new ServerBaseMessage()
                 {
-                    tcpClient = session,
+                     myBaseClient = session,
                     message = message
 
                 });
@@ -112,7 +112,7 @@ namespace MyServerCore.Server.MessageRouter.Client
                         if (pMessage != null)
                         {
                             var packMessage = pMessage.message;
-                            if (packMessage != null) ExcuteLoopMessage(packMessage, pMessage.tcpClient);
+                            if (packMessage != null) ExcuteLoopMessage(packMessage, pMessage.myBaseClient);
                         }
                     }
                     else
@@ -132,7 +132,7 @@ namespace MyServerCore.Server.MessageRouter.Client
         /// </summary>
         /// <param name="message"></param>
         /// <param name="session"></param>
-        private void ExcuteLoopMessage(IMessage message, CTcpClient session)
+        private void ExcuteLoopMessage(IMessage message,MyBaseClient session)
         {
             var fireMethod = this.GetType().GetMethod("FireMessageData", BindingFlags.NonPublic | BindingFlags.Instance);
             var met = fireMethod.MakeGenericMethod(message.GetType());
@@ -163,7 +163,7 @@ namespace MyServerCore.Server.MessageRouter.Client
         /// <typeparam name="T"></typeparam>
         /// <param name="session"></param>
         /// <param name="messageData"></param>
-        private void FireMessageData<T>(CTcpClient session, T messageData) where T : IMessage
+        private void FireMessageData<T>(MyBaseClient session, T messageData) where T : IMessage
         {
             string type = typeof(T).FullName;
             if (_handlers.ContainsKey(type))

@@ -88,7 +88,14 @@ public class CTcpClient:TcpClient
                         IMessage packMessage = ProtobufSession.ParseFrom(code, data, 0, data.Length);
                         if (packMessage != null)
                         {
-                            if (ClientMessageRouter.GetInstance().IsRunning)ClientMessageRouter.GetInstance().AddMessageToQueue(this, packMessage);
+                            if (ClientMessageRouter.GetInstance().IsRunning) 
+                            {
+                                MyBaseClient myBaseClient = new MyBaseClient()
+                                {
+                                    tcpClient = this,
+                                };
+                                ClientMessageRouter.GetInstance().AddMessageToQueue(myBaseClient, packMessage);
+                            };
                             
                         }
                     }

@@ -4,6 +4,7 @@ using Google.Protobuf;
 using MyServerCode.Summer.Service.SSL;
 using MyServerCore.Log.Log;
 using MyServerCore.Server.CRC;
+using MyServerCore.Server.MessageRouter.Server;
 using MyServerCore.Server.ProtobufService;
 
 namespace MyServerCore.Server.Ssl.Server;
@@ -91,7 +92,11 @@ public class CSslSession:SslSession
                         {
                             if (MessageRouter.ServiceMessageRouter.GetInstance().IsRunning)
                             {
-
+                                MySession session = new MySession()
+                                {
+                                    sslSession = this,
+                                };
+                                MessageRouter.ServiceMessageRouter.GetInstance().AddMessageToQueue(session, packMessage);
                             }
                                 
                             Console.WriteLine("收到客户端:" + packMessage);

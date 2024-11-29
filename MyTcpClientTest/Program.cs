@@ -6,7 +6,7 @@ Console.WriteLine("Hello, World!");
 
 ServiceManager _service = new ServiceManager(2);
 _service.StartService();
-Thread .Sleep(1000);
+Thread .Sleep(2000);
 if (_service.IsConnection)
 {
     //string json =

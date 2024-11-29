@@ -7,6 +7,7 @@ using MyServerCode.Summer.Service.Tcp;
 using MyServerCore.Log.Log;
 using MyServerCore.Server.CRC;
 using MyServerCore.Server.MessageRouter;
+using MyServerCore.Server.MessageRouter.Server;
 using MyServerCore.Server.ProtobufService;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -97,8 +98,14 @@ public class CTcpSession:TcpSession
                         IMessage packMessage = ProtobufSession.ParseFrom(code, data, 0, data.Length );
                         if (packMessage != null)
                         {
-                            if(MessageRouter.ServiceMessageRouter.GetInstance().IsRunning)
-                                MessageRouter.ServiceMessageRouter.GetInstance().AddMessageToQueue(this,packMessage);
+                            if (MessageRouter.ServiceMessageRouter.GetInstance().IsRunning)
+                            {
+                                MySession session = new MySession()
+                                {
+                                    tcpSession = this
+                                };
+                                MessageRouter.ServiceMessageRouter.GetInstance().AddMessageToQueue(session, packMessage);
+                            }
                             Console.WriteLine ("收到客户端:" + packMessage);
                         }
                     }

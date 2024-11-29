@@ -12,6 +12,9 @@ namespace MyServerCore.Server.WS.Server
 {
     public class CWsServer:WsServer
     {
+        public CWsServer(string address,int port):this(IPAddress.Parse(address), port)
+        { 
+        }
         public CWsServer(IPAddress address, int port) : base(address, port) { }
 
         protected override TcpSession CreateSession() { return new CWsSession(this); }
