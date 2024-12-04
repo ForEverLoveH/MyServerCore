@@ -19,6 +19,7 @@
 
     <ItemGroup>
       <Folder Include="Common\" />
+      <Folder Include="MessageRouter\JsonMessage\" />
     </ItemGroup>
 
 </Project>

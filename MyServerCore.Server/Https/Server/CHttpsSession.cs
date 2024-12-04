@@ -8,7 +8,10 @@ namespace MyServerCore.Server.Https.Server;
 public class CHttpsSession :HttpsSession
 {
     public CHttpsSession (HttpsServer server) : base(server) {}
-
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="request"></param>
     protected override void OnReceivedRequest(HttpRequest request)
     {
         // Show HTTP request content

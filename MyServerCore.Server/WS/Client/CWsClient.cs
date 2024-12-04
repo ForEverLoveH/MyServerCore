@@ -26,6 +26,12 @@ namespace MyServerCore.Server.WS.Client
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="ipaddress"></param>
+        /// <param name="port"></param>
+        public CWSClient(string ipaddress,int port):this(IPAddress.Parse(ipaddress), port) { }
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="address"></param>
         /// <param name="port"></param>
         /// <param name="messages"></param>

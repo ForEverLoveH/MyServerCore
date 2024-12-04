@@ -1,5 +1,7 @@
 ﻿using MyServerCode.Summer.Service.SSL;
 using MyServerCore.Server.GenerateCertificate;
+using MyServerCore.Server.Http.Server;
+using MyServerCore.Server.Https.Server;
 using MyServerCore.Server.MessageRouter;
 using MyServerCore.Server.Ssl.Server;
 using MyServerCore.Server.Tcp.Server;
@@ -26,6 +28,8 @@ public class ServiceManager
     private CSslServer _sslServer;
     private CWssServer _wssServer;
     private CWsServer _wsServer;
+    private CHttpServer _cHttpServer;
+    private CHttpsServer _chttpsServer;
     /// <summary>
     /// 
     /// </summary>
@@ -37,8 +41,34 @@ public class ServiceManager
         else if (type == 2) StartCSSlService();
         else if (type == 3) StartWSSService();
         else if (type == 4) StartWsService();
+        else if (type == 5) StartHttpService();
+        else if (type == 6) StartHttpsService();
     }
+    #region http 服务
+    /// <summary>
+    /// 
+    /// </summary>
+    private void StartHttpsService()
+    {
+        var context = CreateGenerateCertificate();
+        _chttpsServer = new CHttpsServer(context, "127.0.0.1", 9996);
+        _chttpsServer.Start();
+        
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    private void StartHttpService()
+    {
+        _cHttpServer = new CHttpServer("127.0.0.1", 9996);
+        _cHttpServer.Start();
+    }
+    #endregion
 
+    #region websocket 服务
+    /// <summary>
+    /// 
+    /// </summary>
     private void StartWsService()
     {
         _wsServer = new CWsServer("127.0.0.1", 9966);
@@ -51,9 +81,10 @@ public class ServiceManager
     private void StartWSSService()
     {
         var context=CreateGenerateCertificate();    
-         _wssServer = new CWssServer(context,IPAddress.Parse("127.0.0.1"), 9966);
+         _wssServer = new CWssServer(context,"127.0.0.1", 9966);
         _wssServer.Start();
     }
+    #endregion
     /// <summary>
     /// 
     /// </summary>
@@ -97,7 +128,7 @@ public class ServiceManager
     {
         var context=CreateGenerateCertificate();
         
-        _sslServer = new CSslServer(context, IPAddress.Parse("127.0.0.1"), 9996);
+        _sslServer = new CSslServer(context,  "127.0.0.1", 9996);
         _sslServer.Start();
     }
     /// <summary>

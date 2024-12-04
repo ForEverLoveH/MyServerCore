@@ -12,6 +12,11 @@ namespace MyServerCore.Server.WSS.Client
 {
     public class CWssClient:WssClient
     {
+
+        public CWssClient(SslContext context,string address,int port) : base(context, address, port)
+        {
+
+        }
         public CWssClient(SslContext context, string address, int port, int messages) : base(context, address, port)
         {
             _messages = messages;

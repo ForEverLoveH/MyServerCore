@@ -8,6 +8,8 @@ public class CSslServer:SslServer
 {
     public CSslServer(SslContext context, IPAddress address, int port) : base(context, address, port) {}
 
+    public CSslServer(SslContext context ,string ipaddress ,int port):base(context, ipaddress, port) {}
+
     protected override SslSession CreateSession() { return new  CSslSession(this); 
     }
 
