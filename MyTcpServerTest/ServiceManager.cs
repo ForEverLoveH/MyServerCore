@@ -3,6 +3,7 @@ using MyServerCore.Server.GenerateCertificate;
 using MyServerCore.Server.Http.Server;
 using MyServerCore.Server.Https.Server;
 using MyServerCore.Server.MessageRouter;
+using MyServerCore.Server.MessageRouter.Server;
 using MyServerCore.Server.Ssl.Server;
 using MyServerCore.Server.Tcp.Server;
 using MyServerCore.Server.Udp.Server;
@@ -44,6 +45,10 @@ public class ServiceManager
         else if (type == 5) StartHttpService();
         else if (type == 6) StartHttpsService();
     }
+    /// <summary>
+    /// 记录链接对象的最后一次心跳时间
+    /// </summary>
+    private Dictionary<MySession, DateTime> HeartBeatPairs = new Dictionary<MySession, DateTime>();
     #region http 服务
     /// <summary>
     /// 
@@ -151,7 +156,44 @@ public class ServiceManager
         _tcpService = new CTcpService("127.0.0.1", 9996);
         _tcpService.Start();
     }
-    
-    
+
+
+    #endregion
+
+    #region 心跳
+
+    private void StartHeartbeatService()
+    {
+        ServiceMessageRouter.GetInstance().OnMessage<HeartBeatRequest>(_HeartBeatRequest);
+        Timer timer = new Timer(_TimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+    }
+
+    private void _HeartBeatRequest(MySession session, HeartBeatRequest message)
+    {
+        HeartBeatPairs[session] = DateTime.Now;
+        // Thread.Sleep(300);
+        HeartBeatResponse messages = new HeartBeatResponse();
+         
+    }
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="state"></param>
+    private void _TimerCallback(object state)
+    {
+        // Log.Information("执行心跳检查");
+        var now = DateTime.Now;
+        foreach (var pair in HeartBeatPairs)
+        {
+            var cha = now - pair.Value;
+            if (cha.TotalMilliseconds > 3000)
+            {
+                //关闭超时链接
+                pair.Key.CloseNetConntion();
+                HeartBeatPairs.Remove(pair.Key);
+            }
+        }
+    }
     #endregion
 }

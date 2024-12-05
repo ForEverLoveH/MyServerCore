@@ -53,7 +53,7 @@ namespace MyServerCore.Server.GenerateCertificate
         /// </summary>
         /// <param name="loseEffect">失效时间</param>
         /// <param name="password">密码</param>
-        /// <param name="savePath">保存路径</param>
+         /// <param name="friendlyName"></param>  
         public  MyGenerateCertificate(DateTime loseEffect,string password, string friendlyName)
         {
             this.loseEffect = loseEffect;

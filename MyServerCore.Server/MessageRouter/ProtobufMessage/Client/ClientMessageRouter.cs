@@ -49,6 +49,31 @@ namespace MyServerCore.Server.MessageRouter.Client
         /// 
         /// </summary>
         public Dictionary<string, Delegate> _handlers = new Dictionary<string, Delegate>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="handler"></param>
+        public void OnMessage<T>(MessageHandler<T> handler) where T : IMessage
+        {
+            try
+            {
+                string key = typeof(T).FullName;
+                if (!_handlers.ContainsKey(key))
+                {
+                    _handlers[key] = null;
+                }
+
+                _handlers[key] = (_handlers[key] as MessageHandler<T>) + handler;
+                Console.Write(_handlers[key].GetInvocationList().Length);
+            }
+            catch (Exception ex)
+            {
+
+                return;
+            }
+        }
         /// <summary>
         /// 
         /// </summary>

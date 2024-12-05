@@ -10,7 +10,9 @@ using MyServerCore.Server.ProtobufService;
 using Newtonsoft.Json;
 
 namespace MyServerCore.Server.Tcp.Server;
-
+/// <summary>
+/// 
+/// </summary>
 public class CTcpService:TcpService
 {
 

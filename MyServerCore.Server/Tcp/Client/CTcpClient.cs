@@ -36,7 +36,7 @@ public class CTcpClient:TcpClient
     protected override void OnConnected()
     {
          MyLogTool.ColorLog(MyLogColor.Green,$"Chat TCP client connected a new session with Id {Id}");
-        StartHeartBeatService();
+         StartHeartBeatService();
     }
 
      
@@ -232,15 +232,35 @@ public class CTcpClient:TcpClient
     /// </summary>
     private void StartHeartBeatService()
     {
-        _heartBeatTimer= new Timer(_TimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+        ClientMessageRouter.GetInstance().OnMessage<HeartBeatResponse>(_HeartBeatResponse);
+        _heartBeatTimer = new Timer(_TimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
     }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="message"></param>
+    private void _HeartBeatResponse(MyBaseClient session, HeartBeatResponse message)
+    {
+        var ms = DateTime.Now - lastBeatTime;
+        var pl = Math.Round(ms.TotalMilliseconds).ToString();
+        int po = Math.Max(1, int.Parse(pl));
+        string pll = $"网络延迟: {po}ms";
+    }
+
+    private  HeartBeatRequest _heartBeatRequest = new HeartBeatRequest();
+    /// <summary>
+    ///
+    /// </summary>
+    private DateTime lastBeatTime = DateTime.MinValue;
     /// <summary>
     /// 
     /// </summary>
     /// <param name="state"></param>
     private void _TimerCallback(object state)
     {
-
+        CSendProtobufData(_heartBeatRequest);
+        lastBeatTime = DateTime.MinValue;
     }
     #endregion
     protected override void OnError(SocketError error)

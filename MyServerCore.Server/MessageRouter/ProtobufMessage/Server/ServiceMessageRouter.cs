@@ -52,6 +52,30 @@ namespace MyServerCore.Server.MessageRouter
         /// 
         /// </summary>
         /// <typeparam name="T"></typeparam>
+        /// <param name="handler"></param>
+        public void OnMessage<T>(MessageHandler<T> handler) where T : IMessage
+        {
+            try
+            {
+                string key = typeof(T).FullName;
+                if (!_handlers.ContainsKey(key))
+                {
+                    _handlers[key] = null;
+                }
+
+                _handlers[key] = (_handlers[key] as MessageHandler<T>) + handler;
+                Console.Write(_handlers[key].GetInvocationList().Length);
+            }
+            catch (Exception ex)
+            {
+                
+                return;
+            }
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
         /// <param name="session"></param>
         /// <param name="message"></param>
         public void AddMessageToQueue<T>(MySession session,T message) where T : IMessage
@@ -82,6 +106,7 @@ namespace MyServerCore.Server.MessageRouter
             this.threadCount = Math.Min(Math.Max(threadCount, 1), 200);
             for(int i = 0; i< threadCount; i++)
             {
+                
                 ThreadPool.QueueUserWorkItem( new     WaitCallback(_HandlerCurrentMessageCallBack));
             }
             while(currentThreadCount < this.threadCount)
