@@ -18,6 +18,7 @@ public class CSslClient:SslClient
     {
         this.isJson = isjson;   
     }
+    
     private bool isJson = false;
     public void DisconnectAndStop()
     {
@@ -83,7 +84,11 @@ public class CSslClient:SslClient
                         {
                             if (ClientMessageRouter.GetInstance().IsRunning)
                             {
-                                //ClientMessageRouter.GetInstance().AddMessageToQueue(this, packMessage);
+                                MyBaseClient message = new  MyBaseClient()
+                                {
+                                   sslClient= this
+                                };
+                                ClientMessageRouter.GetInstance().AddMessageToQueue(message, packMessage);
                             }
 
                         }

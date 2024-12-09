@@ -95,7 +95,7 @@ public class CUdpServer:MyServerCode.Summer.Service.UDP.UdpServer
                         {
                             if (MessageRouter.ServiceMessageRouter.GetInstance().IsRunning)
                             {
-                                MySession session = new MySession()
+                                MyService session = new MyService()
                                 {
                                     udpServer = this
                                 };

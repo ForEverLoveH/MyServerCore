@@ -14,11 +14,13 @@ public class CSslSession:SslSession
     public CSslSession(SslServer server, bool isJson=false) : base(server)
     {
         this.isJson = isJson;
+        this.sslServer = server;    
     }
     protected override void OnConnected()
     {
         Console.WriteLine($"Chat SSL session with Id {Id} connected!");
     }
+    private SslServer sslServer;
     bool isJson;
     protected override void OnHandshaked()
     {
@@ -92,14 +94,14 @@ public class CSslSession:SslSession
                         {
                             if (MessageRouter.ServiceMessageRouter.GetInstance().IsRunning)
                             {
-                                MySession session = new MySession()
+                                MyService session = new MyService()
                                 {
-                                    sslSession = this,
+                                    sslSession = sslServer,
                                 };
                                 MessageRouter.ServiceMessageRouter.GetInstance().AddMessageToQueue(session, packMessage);
                             }
                                 
-                            Console.WriteLine("收到客户端:" + packMessage);
+                           
                         }
                     }
                 }

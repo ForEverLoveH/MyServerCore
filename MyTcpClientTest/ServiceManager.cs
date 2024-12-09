@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf;
 using MyServerCode.Summer.Service.SSL;
+using MyServerCore.Log.Log;
 using MyServerCore.Server.GenerateCertificate;
 using MyServerCore.Server.Http.Client;
 using MyServerCore.Server.Https.Client;
@@ -82,6 +83,7 @@ public class ServiceManager
         {
             StartHttpsClientService();
         }
+        StartHeartbeatService();
      }
     /// <summary>
     /// 
@@ -197,4 +199,62 @@ public class ServiceManager
         var context = new SslContext(SslProtocols.Tls13, new X509Certificate2(pfxPath, "qwerty"), (sender, certificate, chain, sslPolicyErrors) => true);
         return context;
     }
+
+
+    #region 心跳
+    /// <summary>
+    /// 
+    /// </summary>
+    private Timer heartbeatTimer;
+    /// <summary>
+    /// 
+    /// </summary>
+    private HeartBeatRequest     HeartBeatRequest = new HeartBeatRequest();
+    /// <summary>
+    /// 
+    /// </summary>
+    private DateTime sendDateTime;
+    /// <summary>
+    /// 
+    /// </summary>
+    private void StartHeartbeatService()
+    {
+         
+         heartbeatTimer = new Timer(_TimerCallBackHandler, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+         ClientMessageRouter.GetInstance().OnMessage<HeartBeatResponse>(_HeartBeatResponse);
+         sendDateTime = DateTime.Now;
+        
+    }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="message"></param>
+    private void _HeartBeatResponse(MyBaseClient session, HeartBeatResponse message)
+    {
+        MyLogTool.ColorLog(MyLogColor.Blue, "收到心跳相应消息");
+        DateTime now= DateTime.Now;
+
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="state"></param>
+    private void _TimerCallBackHandler(object state)
+    {
+        if (IsConnection)
+        {
+            if (type == 0)_cTcpClient.CSendProtobufData(HeartBeatRequest);
+            else if (type == 1)
+            {
+                _udpclient.CSendProtobufData(HeartBeatRequest);
+            }
+            else if (type == 2)
+            {
+                _csslClient.CSendProtobufData(HeartBeatRequest);
+            }
+        }
+    }
+    #endregion
 }

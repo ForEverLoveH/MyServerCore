@@ -25,7 +25,9 @@ public class CTcpSession:TcpSession
     public CTcpSession(TcpService tcpService,bool isjson=false) : base(tcpService)
     {
         this.isjson = isjson;
+        this.tcpService = tcpService;
     }
+    private TcpService tcpService;
     bool isjson ;
     protected override void OnConnected()
     {
@@ -100,9 +102,9 @@ public class CTcpSession:TcpSession
                         {
                             if (MessageRouter.ServiceMessageRouter.GetInstance().IsRunning)
                             {
-                                MySession session = new MySession()
+                                MyService session = new MyService()
                                 {
-                                    tcpSession = this
+                                    tcpSession = tcpService
                                 };
                                 MessageRouter.ServiceMessageRouter.GetInstance().AddMessageToQueue(session, packMessage);
                             }

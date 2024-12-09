@@ -1,4 +1,5 @@
 ﻿using MyServerCode.Summer.Service.SSL;
+using MyServerCore.Log.Log;
 using MyServerCore.Server.GenerateCertificate;
 using MyServerCore.Server.Http.Server;
 using MyServerCore.Server.Https.Server;
@@ -12,6 +13,7 @@ using MyServerCore.Server.WSS.Server;
 using System.Net;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using System.Xml.Linq;
 
 namespace MyTcpServerTest;
 /// <summary>
@@ -44,11 +46,12 @@ public class ServiceManager
         else if (type == 4) StartWsService();
         else if (type == 5) StartHttpService();
         else if (type == 6) StartHttpsService();
+        StartHeartbeatService();
     }
     /// <summary>
     /// 记录链接对象的最后一次心跳时间
     /// </summary>
-    private Dictionary<MySession, DateTime> HeartBeatPairs = new Dictionary<MySession, DateTime>();
+    private Dictionary<MyService, DateTime> HeartBeatPairs = new Dictionary<MyService, DateTime>();
     #region http 服务
     /// <summary>
     /// 
@@ -161,19 +164,42 @@ public class ServiceManager
     #endregion
 
     #region 心跳
-
+    /// <summary>
+    /// 
+    /// </summary>
+    private Timer CheackHeartTimer;
+    /// <summary>
+    /// 
+    /// </summary>
     private void StartHeartbeatService()
     {
         ServiceMessageRouter.GetInstance().OnMessage<HeartBeatRequest>(_HeartBeatRequest);
-        Timer timer = new Timer(_TimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+        CheackHeartTimer = new Timer(_TimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(100));
     }
-
-    private void _HeartBeatRequest(MySession session, HeartBeatRequest message)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="message"></param>
+    private void _HeartBeatRequest(MyService session, HeartBeatRequest message)
     {
         HeartBeatPairs[session] = DateTime.Now;
         // Thread.Sleep(300);
         HeartBeatResponse messages = new HeartBeatResponse();
-         
+        if(session.tcpSession != null)
+        {
+            CTcpService service= (CTcpService)session.tcpSession;
+            service.CSendProtobufData(messages);
+        }
+        else if (session.udpServer != null)
+        {
+            CUdpServer server= (CUdpServer)session.udpServer;
+            server.CSendProtobufData(messages);
+        }else  if(session.sslSession != null)
+        {
+            CSslServer server= (CSslServer) session.sslSession;
+            server.CSendProtobufData(messages);
+        }
     }
 
     /// <summary>
@@ -182,16 +208,23 @@ public class ServiceManager
     /// <param name="state"></param>
     private void _TimerCallback(object state)
     {
-        // Log.Information("执行心跳检查");
+        MyLogTool.ColorLog(MyLogColor.Blue,  "执行心跳检查");
         var now = DateTime.Now;
-        foreach (var pair in HeartBeatPairs)
+        if (HeartBeatPairs != null && HeartBeatPairs.Count > 0)
         {
-            var cha = now - pair.Value;
-            if (cha.TotalMilliseconds > 3000)
+            foreach (var pair in HeartBeatPairs)
             {
-                //关闭超时链接
-                pair.Key.CloseNetConntion();
-                HeartBeatPairs.Remove(pair.Key);
+                var cha = now - pair.Value;
+                if (cha.TotalMilliseconds > 3000)
+                {
+                    //关闭超时链接
+                    var service = pair.Key;
+                    if (service.tcpSession != null)
+                    {
+                        service.tcpSession.Stop();
+                    }
+                    HeartBeatPairs.Remove(pair.Key);
+                }
             }
         }
     }
