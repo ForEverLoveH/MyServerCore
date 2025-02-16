@@ -115,7 +115,7 @@ public class ServiceManager
          
      private void StarWsClientService()
     {
-        _cwSClient = new CWSClient("127.0.0.1", 9996);
+        _cwSClient = new CWSClient("127.0.0.1", 8080);
         _cwSClient.ConnectAsync();
     }
 
@@ -234,6 +234,8 @@ public class ServiceManager
     {
         MyLogTool.ColorLog(MyLogColor.Blue, "收到心跳相应消息");
         DateTime now= DateTime.Now;
+        //var second= Math.Round((now-sendDateTime).TotalSeconds);
+        //MyLogTool.ColorLog(MyLogColor.Blue, $"当前帧数{second}");
 
     }
 
@@ -243,13 +245,10 @@ public class ServiceManager
     /// <param name="state"></param>
     private void _TimerCallBackHandler(object state)
     {
-        if (IsConnection)
+        if (IsConnection && type!=1)
         {
             if (type == 0)_cTcpClient.CSendProtobufData(HeartBeatRequest);
-            else if (type == 1)
-            {
-                _udpclient.CSendProtobufData(HeartBeatRequest);
-            }
+            
             else if (type == 2)
             {
                 _csslClient.CSendProtobufData(HeartBeatRequest);

@@ -1,4 +1,5 @@
 ﻿using MyServerCode.Summer.Service.SSL;
+using MyServerCode.Summer.Service.WebSocket.Ws.Server;
 using MyServerCore.Log.Log;
 using MyServerCore.Server.GenerateCertificate;
 using MyServerCore.Server.Http.Server;
@@ -10,6 +11,8 @@ using MyServerCore.Server.Tcp.Server;
 using MyServerCore.Server.Udp.Server;
 using MyServerCore.Server.WS.Server;
 using MyServerCore.Server.WSS.Server;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
@@ -42,8 +45,8 @@ public class ServiceManager
         if (type == 0) StartTcpService();
         else if (type == 1) StartUdpService();
         else if (type == 2) StartCSSlService();
-        else if (type == 3) StartWSSService();
-        else if (type == 4) StartWsService();
+        else if (type == 3) StartWsService();
+        else if (type == 4)  StartWSSService();
         else if (type == 5) StartHttpService();
         else if (type == 6) StartHttpsService();
         StartHeartbeatService();
@@ -51,7 +54,7 @@ public class ServiceManager
     /// <summary>
     /// 记录链接对象的最后一次心跳时间
     /// </summary>
-    private Dictionary<MyService, DateTime> HeartBeatPairs = new Dictionary<MyService, DateTime>();
+    private ConcurrentDictionary<MyService, DateTime> HeartBeatPairs = new ConcurrentDictionary<MyService, DateTime>();
     #region http 服务
     /// <summary>
     /// 
@@ -79,8 +82,15 @@ public class ServiceManager
     /// </summary>
     private void StartWsService()
     {
-        _wsServer = new CWsServer("127.0.0.1", 9966);
+        _wsServer = new CWsServer(IPAddress.Any, 8080);
+
+        string www =Path.Combine(  AppDomain.CurrentDomain.BaseDirectory,"www/ws");
+        _wsServer.AddStaticContent(www, "/chat");
+        MyLogTool.ColorLog(MyLogColor.Red,$"WebSocket server static content path: {www}");
+        MyLogTool.ColorLog(MyLogColor.Red,$"WebSocket server website: https://localhost:{8443}/chat/index.html");
         _wsServer.Start();
+       
+         
     }
 
     /// <summary>
@@ -174,7 +184,10 @@ public class ServiceManager
     private void StartHeartbeatService()
     {
         ServiceMessageRouter.GetInstance().OnMessage<HeartBeatRequest>(_HeartBeatRequest);
-        CheackHeartTimer = new Timer(_TimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(100));
+        if (type != 1)
+        {
+            CheackHeartTimer = new Timer(_TimerCallback, null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
+        }
     }
     /// <summary>
     /// 
@@ -183,7 +196,13 @@ public class ServiceManager
     /// <param name="message"></param>
     private void _HeartBeatRequest(MyService session, HeartBeatRequest message)
     {
-        HeartBeatPairs[session] = DateTime.Now;
+        if (HeartBeatPairs.ContainsKey(session))
+        {
+            HeartBeatPairs[session] = DateTime.Now;
+        } else
+        {
+            HeartBeatPairs.TryAdd(session, DateTime.Now);
+        }
         // Thread.Sleep(300);
         HeartBeatResponse messages = new HeartBeatResponse();
         if(session.tcpSession != null)
@@ -195,7 +214,8 @@ public class ServiceManager
         {
             CUdpServer server= (CUdpServer)session.udpServer;
             server.CSendProtobufData(messages);
-        }else  if(session.sslSession != null)
+        }
+        else  if(session.sslSession != null)
         {
             CSslServer server= (CSslServer) session.sslSession;
             server.CSendProtobufData(messages);
@@ -222,8 +242,9 @@ public class ServiceManager
                     if (service.tcpSession != null)
                     {
                         service.tcpSession.Stop();
+                        HeartBeatPairs.TryRemove(service,out DateTime  lastTime);
                     }
-                    HeartBeatPairs.Remove(pair.Key);
+                     
                 }
             }
         }

@@ -190,7 +190,7 @@ public class CTcpClient:TcpClient
     /// <param name="data"></param>
     public void CSendProtobufData<T>(T data) where T : IMessage<T>
     {
-        RSAService rsa = new RSAService();
+        //RSAService rsa = new RSAService();
         if (data == null) return;
         int code = ProtobufSession.SeqCode(data.GetType());
         byte[] typeCode = BitConverter.GetBytes(code);

@@ -159,6 +159,7 @@ namespace MyServerCore.Server.MessageRouter.Client
         /// <param name="session"></param>
         private void ExcuteLoopMessage(IMessage message,MyBaseClient session)
         {
+            if(message == null) return;
             var fireMethod = this.GetType().GetMethod("FireMessageData", BindingFlags.NonPublic | BindingFlags.Instance);
             var met = fireMethod.MakeGenericMethod(message.GetType());
             met.Invoke(this, new object[] { session, message });

@@ -3,7 +3,7 @@
 using MyTcpClientTest;
 
 Console.WriteLine("Hello, World!");
-
+Thread.Sleep(1000);
 ServiceManager _service = new ServiceManager(2);
 _service.StartService();
 Thread .Sleep(2000);

@@ -250,7 +250,7 @@ public class TcpService:IDisposable
       /// <returns>'true' if the server was successfully stopped, 'false' if the server is already stopped</returns>
       public virtual bool Stop()
       {
-          Debug.Assert(IsStarted, "TCP server is not started!");
+          //Debug.Assert(IsStarted, "TCP server is not started!");
           if (!IsStarted)
               return false;
 
