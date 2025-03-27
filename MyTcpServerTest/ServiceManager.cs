@@ -5,6 +5,8 @@ using MyServerCore.Server.GenerateCertificate;
 using MyServerCore.Server.Http.Server;
 using MyServerCore.Server.Https.Server;
 using MyServerCore.Server.MessageRouter;
+using MyServerCore.Server.MessageRouter.JsonMessage;
+using MyServerCore.Server.MessageRouter.JsonMessage.Server;
 using MyServerCore.Server.MessageRouter.Server;
 using MyServerCore.Server.Ssl.Server;
 using MyServerCore.Server.Tcp.Server;
@@ -41,7 +43,7 @@ public class ServiceManager
     /// </summary>
     public void StartService()
     {
-        ServiceMessageRouter.GetInstance().StartService(10);
+        ServerJsonMessageRouter.GetInstance().StartService(4);
         if (type == 0) StartTcpService();
         else if (type == 1) StartUdpService();
         else if (type == 2) StartCSSlService();
@@ -49,7 +51,7 @@ public class ServiceManager
         else if (type == 4)  StartWSSService();
         else if (type == 5) StartHttpService();
         else if (type == 6) StartHttpsService();
-        StartHeartbeatService();
+        //StartHeartbeatService();
     }
     /// <summary>
     /// 记录链接对象的最后一次心跳时间
@@ -207,7 +209,7 @@ public class ServiceManager
         HeartBeatResponse messages = new HeartBeatResponse();
         if(session.tcpSession != null)
         {
-            CTcpService service= (CTcpService)session.tcpSession;
+            CTcpSession service= (CTcpSession)session.tcpSession;
             service.CSendProtobufData(messages);
         }
         else if (session.udpServer != null)
@@ -241,7 +243,7 @@ public class ServiceManager
                     var service = pair.Key;
                     if (service.tcpSession != null)
                     {
-                        service.tcpSession.Stop();
+                        service.tcpSession.Service.Stop();
                         HeartBeatPairs.TryRemove(service,out DateTime  lastTime);
                     }
                      

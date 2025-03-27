@@ -6,6 +6,7 @@ using MyServerCore.Server.Http.Client;
 using MyServerCore.Server.Https.Client;
 using MyServerCore.Server.MessageRouter;
 using MyServerCore.Server.MessageRouter.Client;
+using MyServerCore.Server.MessageRouter.JsonMessage;
 using MyServerCore.Server.Ssl.Client;
 using MyServerCore.Server.Tcp.Client;
 using MyServerCore.Server.Udp.Client;
@@ -72,7 +73,8 @@ public class ServiceManager
      public void StartService()
      {
 
-        ClientMessageRouter.GetInstance().StartService(4);
+        //ClientMessageRouter.GetInstance().StartService(4);
+        ClientJsonMessageRouter.GetInstance().StartService(4);
         if (type == 0) StartTcpService();
         else if (type == 1) StartUdpService();
         else if (type == 2) StarSSLClientService();
@@ -83,7 +85,7 @@ public class ServiceManager
         {
             StartHttpsClientService();
         }
-        StartHeartbeatService();
+        //StartHeartbeatService();
      }
     /// <summary>
     /// 
@@ -144,7 +146,15 @@ public class ServiceManager
           _cTcpClient = new CTcpClient("127.0.0.1", 9996);
           _cTcpClient.ConnectAsync();
      }
-
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="data"></param>
+    public void SendData<T>(T data) where T : class
+    {
+        _cTcpClient.CSendJsonData(data);
+    }
      /// <summary>
      /// 
      /// </summary>
@@ -161,7 +171,7 @@ public class ServiceManager
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="data"></param>
-    public void SendData<T>(T data)  where T : IMessage<T>
+    public void SendProtoData<T>(T data)  where T : IMessage<T>
     {
         if (type == 0) _cTcpClient.CSendProtobufData(data);
         else if (type == 1) _udpclient.CSendProtobufData(data);

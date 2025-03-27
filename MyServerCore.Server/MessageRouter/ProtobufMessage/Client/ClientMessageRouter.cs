@@ -12,6 +12,9 @@ using System.Threading.Tasks;
 
 namespace MyServerCore.Server.MessageRouter.Client
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class ClientMessageRouter:Singleton<ClientMessageRouter>
     {
         private AutoResetEvent _autoEvent = new AutoResetEvent(true);

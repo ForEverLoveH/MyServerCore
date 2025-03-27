@@ -22,7 +22,7 @@ namespace MyServerCore.Server.MessageRouter.Server
     }
     public class MyService
     {
-        public TcpService tcpSession { get; set; }
+        public TcpSession tcpSession { get; set; }
         public UdpServer udpServer { get; set; }
         public  SslServer sslSession { get; set; }
     }

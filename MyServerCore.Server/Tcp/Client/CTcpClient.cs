@@ -11,6 +11,8 @@ using System.Text;
 using MyServerCore.Log.Log;
 using TcpClient = MyServerCode.Summer.Service.Tcp.TcpClient;
 using MyServerCore.Server.RSA;
+using MyServerCore.Server.JsonMessage;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MyServerCore.Server.Tcp.Client;
 
@@ -36,7 +38,7 @@ public class CTcpClient:TcpClient
     protected override void OnConnected()
     {
          MyLogTool.ColorLog(MyLogColor.Green,$"Chat TCP client connected a new session with Id {Id}");
-         StartHeartBeatService();
+        // StartHeartBeatService();
     }
 
      
@@ -142,12 +144,48 @@ public class CTcpClient:TcpClient
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="message"></param>
-    public void CSendJsonData<T>(T message) where T:class 
+    public void CSendJsonData<T>(T message) where T:class
     {
-        if(message == null)return;
-        string json= JsonConvert.SerializeObject(message);
+        if (message == null) return;
+        string name = typeof(T).Name;
+        
+        JsonMessage.JsonMessage jsonMessage = new JsonMessage.JsonMessage();
+        SetPropertiesFromObject(message, jsonMessage);
+        ClientJsonMessage clientJsonMessage = new ClientJsonMessage()
+        {
+            //tcpClient = this,   
+            //jsonMessage= new CJsonMessage()
+            //{
+            //    message = jsonMessage,
+            //    messageType = (CMessageType)type
+            //}
+        };
+        string json = JsonConvert.SerializeObject(clientJsonMessage);
+        
         CSendJsonData(json);
     }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="source"></param>
+    /// <param name="target"></param>
+    private void SetPropertiesFromObject<T>(T source, object target) where T : class
+    {
+        var sourceProperties = source.GetType().GetProperties();
+        var targetProperties = target.GetType().GetProperties();
+        foreach (var sourceProp in sourceProperties)
+        {
+            var targetProp = targetProperties.FirstOrDefault(p => p.Name == sourceProp.Name && p.CanWrite);
+            if (targetProp != null)
+            {
+                var value = sourceProp.GetValue(source);
+                targetProp.SetValue(target, value);
+            }
+        }
+    }
+     
+    
     /// <summary>
     /// 
     /// </summary>
@@ -263,6 +301,10 @@ public class CTcpClient:TcpClient
         lastBeatTime = DateTime.MinValue;
     }
     #endregion
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="error"></param>
     protected override void OnError(SocketError error)
     {
         MyLogTool.Error($"Chat TCP client caught an error with code {error}");

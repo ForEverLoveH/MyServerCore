@@ -59,7 +59,9 @@ public class CUdpServer:MyServerCode.Summer.Service.UDP.UdpServer
                 {
                     byte[] messages = new byte[messageCode.Length - 2];
                     Array.Copy(messageCode, 0, messages, 0, messages.Length);
+
                     string mess = Encoding.UTF8.GetString(messages);
+
                     MyLogTool.ColorLog(MyLogColor.Green, string.Format("{0}:{1}", "收到客户端json 数据", mess));
                 }
             }
